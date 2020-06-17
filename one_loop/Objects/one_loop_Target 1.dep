@@ -1,0 +1,2 @@
+Dependencies for Project 'one_loop', Target 'Target 1': (DO NOT MODIFY !)
+F (.\one_loop.s)(0x5B290DBD)(--cpu Cortex-M3 -g --apcs=interwork -I D:\stm32\¿Î³Ìday1\day2\one_loop\RTE-I D:\stm32\pack\Keil\STM32F1xx_DFP\2.1.0-I D:\stm32\core\ARM\CMSIS\Include--pd "__UVISION_VERSION SETA 514" --pd "STM32F10X_MD SETA 1"--list .\listings\one_loop.lst --xref -o .\objects\one_loop.o --depend .\objects\one_loop.d)

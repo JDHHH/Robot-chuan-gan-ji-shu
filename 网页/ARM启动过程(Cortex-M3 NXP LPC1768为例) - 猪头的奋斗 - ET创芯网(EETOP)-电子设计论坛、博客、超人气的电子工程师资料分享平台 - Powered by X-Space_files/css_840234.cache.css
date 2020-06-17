@@ -1,0 +1,64 @@
+/*
+X-Space Template
+Template Name: Fairland
+Author: X-Space Team
+Url: http://www.supesite.com
+(C) 2001-2006 Comsenz Inc.
+*/
+
+/*布局*/
+#mainarea { margin: 0 60px; }
+/*Layout_1 左侧导航*/
+.xspace-layout1 #sideleft { float:left; width: 190px; margin-left: 60px; display: inline; }
+.xspace-layout1 .mainarea-side { width: 685px; margin-left: 255px !important; margin-left: 252px; }
+/*Layout_2 右侧导航*/
+.xspace-layout2 #sideright { float: right; width: 190px; margin-right: 55px; display: inline; }
+.xspace-layout2 .mainarea-side { float: left; width: 685px; margin-right: 0 !important; display: inline; }
+/*Layout_3 三列*/
+.xspace-layout3 #sideleft { float:left; width: 190px; margin-left: 60px; display: inline; }
+.xspace-layout3 #sideright { float:right; width: 190px; margin-right: 55px; display: inline; }
+.xspace-layout3 .mainarea-side { float: left; width: 505px; w\idth: 495px; padding: 0 5px; margin: 0 !important; }
+
+/*图片样式*/
+.xspace-imgstyle { background: #EAF2F5; border-color: #CFE1FF; }
+
+/*标题样式*/
+h1.xspace-title { color: #E98F00; background: transparent; }
+.xspace-blocktitle { overflow: hidden; font-size: 1em; color: #73471A; }
+	.sidearea .xspace-blocktitle { background: #D7DFEF url(http://www.eetop.cn/blog/themes/fairyland/images/sidetitle.jpg) no-repeat left top; height: 30px; line-height: 25px; padding-left: 25px; }
+	#mainarea .xspace-blocktitle { font-size: 1.2em; height: 33px; line-height: 37px; border-bottom: 1px solid #C3C3C3; }
+li.xspace-loglist h4.xspace-entrytitle { background-color: transparent; border-bottom: 1px solid #C3C3C3; }
+
+body { margin: 0; padding: 0; background: #CCE3EF url(http://www.eetop.cn/blog/themes/fairyland/images/background.jpg) repeat-x center top; color: #8D8D8D; text-align: center; font: 12px Arial, Helvetica, sans-serif; }
+input, textarea, select, button { font: 1em Arial, Helvetica, sans-serif; }
+#wrap { width: 1000px; margin: 0 auto; text-align: left; background: #FFF url(http://www.eetop.cn/blog/themes/fairyland/images/footer_bg.jpg) no-repeat bottom; padding-bottom: 58px; }
+#header { background: url(http://www.eetop.cn/blog/themes/fairyland/images/header_bg.jpg); height: 349px; }
+
+
+
+#spacename { padding: 12.5em 0 0 8em; color: #E98F00; }
+	#spacename strong { color: #000; }
+
+#menu { padding: 3.5em 6.5em 0 6.5em; }
+	#menu li { border-right: 1px solid #494F3A; padding-right: 1em; }
+		#menu a { color: #494F3A; text-decoration: none; }
+			#menu a:hover { color: #E98F00; }
+
+#content { background: url(http://www.eetop.cn/blog/themes/fairyland/images/content_bg.jpg) repeat-y; }
+
+
+a { color: #3399CC; text-decoration: none; }
+	a:hover { color: #E98F00; text-decoration: underline; }
+	a:visited { color: #099; }
+
+/*突出边框*/
+.xspace-noticemsg, #announcement, .xspace-itemlist li, .xspace-imagebox, #xspace-filebaseinfo li, #xspace-goodsbaseinfo li,
+	#xspace-aplist th, #xspace-aplist td, .xspace-msgmodule h5, .xspace-addoninfo, .xspace-itemlinks, .xspace-itemtag,
+	#xspace-itemreply dt, #xspace-itemform fieldset, table.xspace-page a, #xspace-ownerinfo, #xspace-imgnavbar { border-color: #CFE1FF; }
+
+/*突出背景*/
+#xspace-aplist .xspace-ontop td, #xspace-rates a, table.xspace-page td.xspace-current { background: #EAF2F5; }
+
+table.xspace-page a, table.xspace-page td.xspace-totlerecord, table.xspace-page td.xspace-totlepages { background: #EAF2F5; }	
+
+.xspace-itemlist h4 a { color: #E98F00; }

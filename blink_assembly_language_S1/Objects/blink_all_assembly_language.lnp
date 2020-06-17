@@ -1,0 +1,6 @@
+--cpu Cortex-M3
+".\objects\blink_all_assembly_language.o"
+--strict --scatter ".\Objects\blink_all_assembly_language.sct"
+--summary_stderr --info summarysizes --map --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list ".\Listings\blink_all_assembly_language.map" -o .\Objects\blink_all_assembly_language.axf

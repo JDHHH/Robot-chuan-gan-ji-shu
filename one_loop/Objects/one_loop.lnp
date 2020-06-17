@@ -1,0 +1,6 @@
+--cpu Cortex-M3
+".\objects\one_loop.o"
+--strict --scatter ".\Objects\one_loop.sct"
+--summary_stderr --info summarysizes --map --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list ".\Listings\one_loop.map" -o .\Objects\one_loop.axf

@@ -1,0 +1,366 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- saved from url=(0050)http://www.eetop.cn/blog/html/34/840234-29149.html -->
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=GBK">
+
+<title>ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台  - Powered by X-Space</title>
+<meta name="keywords" content="控制器,软件,接口,系统,功能,ARM,公司,芯片 电子设计论坛，电子工程师博客，资料下载">
+<meta name="description" content="1. 基本概念(CMSIS): Cortex Micro-controller Software Interface Standard，微控制器软件接口标准。2. CMSIS标准的文件结构：a) core_cm&lt;x&gt;.c （stdint.h）b) system_&lt;device&gt;.c （core_cm&lt;h. eetop 是一个综合性的电子设计论坛及工程师blog，涉及IC设计，包括：FPGA、ASIC、微处理器、IC前端设计、IC后端设计、ANALOG/RF/RFID设计等；嵌入式设计包括ARM、MIPS、POWERPC、DSP、单片机设计等；热门产品设计，包括：手机、GPS、机顶盒、汽车电子等；">
+<meta name="baidu-site-verification" content="HkLqtlce4DXZR5ok"><link rel="alternate" type="application/rss+xml" href="http://www.eetop.cn/blog/840234/action-rss-type-blog.html" title="猪头的奋斗">
+<link rel="EditURI" type="application/rsd+xml" title="RSD" href="http://www.eetop.cn/blog/xmlrpc.php?rsd=840234">
+<link id="commonstyle" rel="stylesheet" type="text/css" href="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/space.css">
+<link id="themestyle" rel="stylesheet" type="text/css" href="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/css_840234.cache.css">
+<script type="text/javascript" async="" src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/ga.js"></script><script type="text/javascript">
+var siteUrl = "http://www.eetop.cn/blog";
+</script>
+<script type="text/javascript" language="javascript" src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/ajax.js"></script>
+<script type="text/javascript" language="javascript" src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/common.js"></script>
+<script src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/share.js"></script><link rel="stylesheet" href="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/slide_share.css"></head>
+<body>
+
+<div id="wrap">
+	<div id="header">
+		<div id="spacename">
+			<div id="xspace-spacename">
+				<strong>猪头的奋斗</strong>
+								<p>
+					<a href="javascript:;" class="xspace-copyurl" onclick="javascript:setCopy(&#39;http://www.eetop.cn/blog/840234&#39;);" title="复制地址">copy</a>
+					<a href="http://www.eetop.cn/blog/840234" title="加入收藏" class="xspace-add2fav" onclick="javascript:addBookmark(&#39;猪头的奋斗&#39;,&#39;http://www.eetop.cn/blog/840234&#39;);return false;">Bookmark</a>
+					http://www.eetop.cn/blog/840234				</p>
+			</div>
+		</div>
+		<div id="menu">
+			<ul id="xspace-menu">
+				<li class="xspace-active"><a href="http://www.eetop.cn/blog/html/34/840234-type-blog.html" class="xspace-blog">个人博客</a></li>																												<li><a href="http://www.eetop.cn/blog/html/34/840234-type-friend.html" class="xspace-friend">好友</a></li>				<li><a href="http://www.eetop.cn/blog/840234/spacelist-bbs.html" class="xspace-mybbs">论坛</a></li>				<li><a href="http://www.eetop.cn/blog/840234/action-viewpro.html" class="xspace-guestbook">留言</a></li>							</ul>
+		</div>
+	</div>
+
+	<div id="content" class="xspace-layout1">
+
+		
+		<div id="mainarea" class="mainarea-side">
+			<div id="xspace-guide">
+				<a href="http://www.eetop.cn/blog/batch.manage.php?uid=840234" class="xspace-spacecp" target="_blank">空间管理</a>
+				您的位置:
+				<a href="http://www.eetop.cn/blog/" target="_blank">ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台</a>
+				&#187; <a href="http://www.eetop.cn/blog/html/34/840234.html">猪头的奋斗</a>
+				&#187; <a href="http://www.eetop.cn/blog/html/34/840234-type-blog.html">日志</a>			</div>
+
+			
+			
+						<div id="show"><h1 class="xspace-title">ARM启动过程(Cortex-M3 NXP LPC1768为例)</h1>
+<p class="xspace-smalltxt">
+<a href="http://www.eetop.cn/blog/batch.common.php?action=viewspace&amp;op=up&amp;itemid=29149&amp;uid=840234">上一篇</a> / 
+<a href="http://www.eetop.cn/blog/batch.common.php?action=viewspace&amp;op=next&amp;itemid=29149&amp;uid=840234">下一篇</a> &nbsp;2012-07-23 19:13:46
+
+
+
+
+/ 个人分类：<a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1673.html">ARM(Cortex-M3)</a>
+</p>
+
+<div class="xspace-itemdata">
+<a href="http://www.eetop.cn/blog/html/34/840234-29149.html#xspace-tracks">查看( 22394 )</a> / 
+<a href="http://www.eetop.cn/blog/html/34/840234-29149.html#xspace-itemreply">评论( 3 )</a> / 
+<a href="http://www.eetop.cn/blog/html/34/840234-29149.html#xspace-itemform">评分( <span class="xspace-rategood" title="好评">6</span> / <span class="xspace-ratebad" title="差评">0</span> )</a>
+</div>
+<div id="xspace-showmessage" class="xspace-itemmessage">
+<b>
+			1. 基本概念(CMSIS): Cortex Micro-controller Software Interface Standard，微控制器软件接口标准。</b><div><br></div><div><b>2. CMSIS标准的文件结构：</b></div><div>a) core_cm&lt;x&gt;.c （stdint.h）</div><div>b) system_&lt;device&gt;.c （core_cm&lt;h&gt;, system_&lt;device.h&gt;）</div><div>c) startup_&lt;device&gt;.s</div><div><br></div><div>其中core_cm&lt;x&gt;.c以及core_cm&lt;h&gt;中为内核设访问层，其中定义了定义了内核中得外设几丁质以及一些内核的访问及控制函数。</div><div><br></div><div>startup_&lt;device&gt;.s文件是系统的启动文件，其包括堆和栈的初始化配置、中断向量表的配置以及将程序引导到main()函数等功能。</div><div><br></div><div>system_&lt;device.h&gt;和system_&lt;device&gt;.c文件则是由ARM公司提供模版，各芯片制造商根据自己芯片的特点来编写的。</div><div><br></div><div><b>3. 注解startup_&lt;device&gt;.s文件</b></div><div>此文件主要完成三项工作：堆栈以及堆的初始化、定位中断向量表、调用Reset Handler</div><div>a) 堆栈以及堆的初始化</div><div><div><b>; &lt;h&gt; Stack Configuration</b></div><div><b>; &nbsp; &lt;o&gt; Stack Size (in Bytes) &lt;0x0-0xFFFFFFFF:8&gt;</b></div><div><b>; &lt;/h&gt;</b></div><div><br></div><div><b><font color="#0001ff">Stack_Size &nbsp; &nbsp; &nbsp; &nbsp;<span class="Apple-tab-span" style="white-space:pre">	</span>EQU &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">		</span>0x00000200</font></b></div><div><b><font color="#0001ff"><br></font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span class="Apple-tab-span" style="white-space:pre">		</span>AREA &nbsp; &nbsp;<span class="Apple-tab-span" style="white-space:pre">		</span>STACK, NOINIT, READWRITE, ALIGN=3 &nbsp;</font></b></div><div><b><font color="#0001ff"><span class="Apple-tab-span" style="white-space:pre">				</span>//</font></b><font color="#0001ff"><b>指明8字节对齐（ALIGN=3）</b></font></div><div><font color="#0001ff"><b><br></b></font></div><div><b><font color="#0001ff">Stack_Mem<span class="Apple-tab-span" style="white-space:pre">		</span>SPACE &nbsp; <span class="Apple-tab-span" style="white-space:pre">	</span>Stack_Size</font></b></div><div><b><font color="#0001ff">__initial_sp &nbsp; &nbsp; &nbsp;<span class="Apple-tab-span" style="white-space:pre">	</span>//</font></b><font color="#0001ff"><b>此标号有一层隐含的意思那就是在M3中堆栈是满递减堆 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">	</span>//栈，因为它指定了堆栈指针位于堆栈的高地址（在<span class="Apple-tab-span" style="white-space:pre">						</span>//Stack_Mem之后）</b></font></div><div><br></div><div><br></div><div><b>; &lt;h&gt; Heap Configuration</b></div><div><b>; &nbsp; &lt;o&gt; &nbsp;Heap Size (in Bytes) &lt;0x0-0xFFFFFFFF:8&gt;</b></div><div><b>; &lt;/h&gt;</b></div><div><br></div><div><b><font color="#0001ff">Heap_Size &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">	</span>EQU &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">		</span>0x00000000</font></b></div><div><b><font color="#0001ff"><br></font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span class="Apple-tab-span" style="white-space:pre">			</span>AREA &nbsp; &nbsp;<span class="Apple-tab-span" style="white-space:pre">		</span>HEAP, NOINIT, READWRITE, ALIGN=3</font></b></div><div><b><font color="#0001ff">__heap_base</font></b></div><div><b><font color="#0001ff">Heap_Mem &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">	</span>SPACE<span class="Apple-tab-span" style="white-space:pre">		</span>Heap_Size</font></b></div><div><b><font color="#0001ff">__heap_limit</font></b></div></div><div><br></div><div>以上堆和栈的具体地址可以在工程编译后产生的*.map文件中看到。</div><div><br></div><div>b) 定位中断向量表</div><div><div><span class="Apple-tab-span" style="white-space:pre">		</span><b><font color="#0001ff">PRESERVE8 &nbsp;&nbsp;</font></b></div><div><b><font color="#0001ff"><span class="Apple-tab-span" style="white-space:pre">		</span>//</font></b><font color="#0001ff"><b>PRESERVE8指定了以下的代码位8字节对齐</b></font></div><div><font color="#0001ff"><b><br></b></font></div><div><b><font color="#0001ff"><span class="Apple-tab-span" style="white-space:pre">		</span>THUMB</font></b></div></div><div><b><font color="#0001ff"><span class="Apple-tab-span" style="white-space:pre">		</span>//</font></b><font color="#0001ff"><b>THUMB指定了接下来的代码为THUMB指令集</b></font></div><div><b><font color="#0001ff"><br></font></b></div><div><div><b><font color="#0001ff">; Vector Table Mapped to Address 0 at Reset</font></b></div><div><b><font color="#0001ff"><br></font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; AREA &nbsp; &nbsp;RESET, DATA, READONLY</font></b></div><div><b><font color="#0001ff"><span class="Apple-tab-span" style="white-space:pre">		</span>//</font></b><font color="#0001ff"><b>此语句声明RESET数据段</b></font></div><div><b><font color="#0001ff"><br></font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; EXPORT &nbsp;__Vectors</font></b></div><div><b><font color="#0001ff"><span class="Apple-tab-span" style="white-space:pre">		</span>//</font></b><font color="#0001ff"><b>导出向量表标号，EXPORT作用类似于C语言中的extern</b></font></div><div><b><font color="#0001ff"><br></font></b></div><div><b><font color="#0001ff">__Vectors &nbsp; &nbsp; &nbsp;&nbsp;</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; __initial_sp &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span class="Apple-tab-span" style="white-space:pre">	</span>; Top of Stack</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; Reset_Handler &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">		</span>; Reset Handler</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; NMI_Handler &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">		</span>; NMI Handler</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; HardFault_Handler &nbsp; &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">	</span>; Hard Fault Handler</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; MemManage_Handler &nbsp; &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">	</span>; MPU Fault Handler</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; BusFault_Handler &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span class="Apple-tab-span" style="white-space:pre">	</span>; Bus Fault Handler</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; UsageFault_Handler &nbsp; &nbsp; &nbsp; &nbsp;<span class="Apple-tab-span" style="white-space:pre">	</span>; Usage Fault Handler</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">			</span>; Reserved</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">			</span>; Reserved</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">			</span>; Reserved</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">			</span>; Reserved</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; SVC_Handler &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">		</span>; SVCall Handler</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; DebugMon_Handler &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span class="Apple-tab-span" style="white-space:pre">	</span>; Debug Monitor Handler</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; 0 &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">			</span>; Reserved</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; PendSV_Handler &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span class="Apple-tab-span" style="white-space:pre">	</span>; PendSV Handler</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; SysTick_Handler &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">	</span>; SysTick Handler</font></b></div><div><b><font color="#0001ff"><br></font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ; External Interrupts</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; WDT_IRQHandler &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span class="Apple-tab-span" style="white-space:pre">	</span>; 16: Watchdog Timer</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; TIMER0_IRQHandler &nbsp; &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">	</span>; 17: Timer0</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; TIMER1_IRQHandler &nbsp; &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">	</span>; 18: Timer1</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; TIMER2_IRQHandler &nbsp; &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">	</span>; 19: Timer2</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; TIMER3_IRQHandler &nbsp; &nbsp; &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">	</span>; 20: Timer3</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; DCD &nbsp; &nbsp; UART0_IRQHandler &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;<span class="Apple-tab-span" style="white-space:pre">	</span>; 21: UART0</font></b></div><div><b><font color="#0001ff">&nbsp;（……省略）</font></b></div></div><div><br></div><div><br></div><div>c) 调用Reset Handler</div><div><div><b><font color="#0001ff">; Reset Handler</font></b></div><div><b><font color="#0001ff"><br></font></b></div><div><b><font color="#0001ff">Reset_Handler &nbsp;&nbsp;</font></b></div><div><b><font color="#0001ff"><span class="Apple-tab-span" style="white-space:pre">		</span>PROC</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; EXPORT &nbsp;Reset_Handler &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; [WEAK]</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; IMPORT &nbsp;SystemInit</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; IMPORT &nbsp;__main</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; LDR &nbsp; &nbsp; R0, =SystemInit</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; BLX &nbsp; &nbsp; R0</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; LDR &nbsp; &nbsp; R0, =__main</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; BX &nbsp; &nbsp; &nbsp;R0</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ENDP</font></b></div></div><div><br></div><div>注释：引导程序进入__main(此__main是C_Library中的函数，非main())</div><div><br></div><div>d) 其他的代码</div><div><div>这段代码是NXP公司的LPC1700系列的MCU特有的一段代码，其他公司的Cortex-M3 MCU的启动程序是没有这段代码的。</div><div><br></div><div>这段代码是指定LPC1700的CRP加密级别的代码段，芯片上电后会自动读取这一地址的值以确定加密方式，其中CRP_Key = 0xffffffff为不加密（0级加密），CRP_Key = 0x12345678为1级加密，CRP_Key = 0x87654321为2级加密，CRP_Key = 0x43218765为3级加密（最高级加密），3级加密将会禁止所有的ISP指令，也就是说，芯片将不能读写、不能擦除。</div></div><div><div>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; <font color="#0001ff"><b>IF &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">	</span>:LNOT::DEF:NO_CRP</b></font></div><div><font color="#0001ff"><b>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; AREA &nbsp; &nbsp;<span class="Apple-tab-span" style="white-space:pre">	</span>|.ARM.__at_0x02FC|, CODE, READONLY</b></font></div><div><font color="#0001ff"><b>CRP_Key &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;</b></font></div><div><font color="#0001ff"><b><span class="Apple-tab-span" style="white-space:pre">		</span>DCD &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">	</span>0xFFFFFFFF</b></font></div><div><font color="#0001ff"><b>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ENDIF</b></font></div><div><font color="#0001ff"><b><br></b></font></div><div><font color="#0001ff"><b><br></b></font></div><div><font color="#0001ff"><b>&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; AREA &nbsp; &nbsp;<span class="Apple-tab-span" style="white-space:pre">	</span>|.text|, CODE, READONLY</b></font></div></div><div><font color="#0001ff"><b><br></b></font></div><div>e)&nbsp;堆栈以及堆的初始化行为</div><div><div><b><font color="#0001ff">; User Initial Stack &amp; Heap</font></b></div><div><b><font color="#0001ff"><br></font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; IF &nbsp; &nbsp; &nbsp;<span class="Apple-tab-span" style="white-space:pre">	</span>:DEF:__MICROLIB</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; EXPORT &nbsp;__initial_sp</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; EXPORT &nbsp;__heap_base</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; EXPORT &nbsp;__heap_limit</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ELSE</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;&nbsp;</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; IMPORT &nbsp;__use_two_region_memory</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; EXPORT &nbsp;__user_initial_stackheap</font></b></div><div><b><font color="#0001ff">__user_initial_stackheap</font></b></div><div><b><font color="#0001ff"><br></font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; LDR &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">	</span>R0, = &nbsp;Heap_Mem</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; LDR &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">	</span>R1, = (Stack_Mem + Stack_Size)</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; LDR &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">	</span>R2, = (Heap_Mem + &nbsp;Heap_Size)</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; LDR &nbsp; &nbsp; <span class="Apple-tab-span" style="white-space:pre">	</span>R3, = Stack_Mem</font></b></div><div><b><font color="#0001ff">&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; BX &nbsp; &nbsp; &nbsp;<span class="Apple-tab-span" style="white-space:pre">	</span>LR</font></b></div></div><div><b><font color="#0001ff"><br></font></b></div><div><b>4. ARM启动工程详解</b></div>
+			
+			
+			<br>
+<div class="xspace-imginlog">
+</div>
+</div><div id="xspace-tracks" class="xspace-msgmodule">
+<h5>
+<a href="http://www.eetop.cn/blog/batch.track.php?itemid=29149" target="_blank" title="查看全部脚印" style="float:right;" class="xspace-smalltxt">全部脚印</a>
+<a href="javascript:;" onclick="javascript:deletetrack(29149);" target="_self" title="清除我的脚印" style="float:right;margin-right:0.5em;" class="xspace-smalltxt">不留脚印</a>
+留下脚印:
+</h5>
+<ul class="xspace-list">
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/38370/" title="38370曾经在2018-4-26访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar.php" alt="38370曾经在2018-4-26访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/38370/" target="_blank">38370</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/html/02/1074402.html" title="lytyzu曾经在2018-2-03访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(1).php" alt="lytyzu曾经在2018-2-03访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/html/02/1074402.html" target="_blank">lytyzu</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/93613/" title="93613曾经在2017-12-26访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(2).php" alt="93613曾经在2017-12-26访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/93613/" target="_blank">93613</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/1692746/" title="1692746曾经在2017-12-21访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(3).php" alt="1692746曾经在2017-12-21访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/1692746/" target="_blank">1692746</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/597718/" title="597718曾经在2017-11-22访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(4).php" alt="597718曾经在2017-11-22访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/597718/" target="_blank">597718</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/1532239/" title="1532239曾经在2017-8-08访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(5).php" alt="1532239曾经在2017-8-08访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/1532239/" target="_blank">1532239</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/1621014/" title="1621014曾经在2017-3-14访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(6).php" alt="1621014曾经在2017-3-14访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/1621014/" target="_blank">1621014</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/html/41/629141.html" title="wofred曾经在2016-12-27访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(7).php" alt="wofred曾经在2016-12-27访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/html/41/629141.html" target="_blank">wofred</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/html/45/271045.html" title="iamyuchenjie曾经在2016-11-02访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(8).php" alt="iamyuchenjie曾经在2016-11-02访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/html/45/271045.html" target="_blank">iamyuchenjie</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/html/01/107001.html" title="jacobshen曾经在2016-9-24访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(9).php" alt="jacobshen曾经在2016-9-24访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/html/01/107001.html" target="_blank">jacobshen</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/html/28/1477328.html" title="kingyuan曾经在2016-8-22访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(10).php" alt="kingyuan曾经在2016-8-22访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/html/28/1477328.html" target="_blank">kingyuan</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/1229772/" title="1229772曾经在2016-8-16访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(11).php" alt="1229772曾经在2016-8-16访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/1229772/" target="_blank">1229772</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/html/89/649089.html" title="lxing_1988曾经在2016-8-11访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(12).php" alt="lxing_1988曾经在2016-8-11访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/html/89/649089.html" target="_blank">lxing_1988</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/61920/" title="61920曾经在2016-5-25访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(13).php" alt="61920曾经在2016-5-25访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/61920/" target="_blank">61920</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/html/53/1090353.html" title="woai2020曾经在2016-5-23访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(14).php" alt="woai2020曾经在2016-5-23访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/html/53/1090353.html" target="_blank">woai2020</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/272013/" title="272013曾经在2016-5-10访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(15).php" alt="272013曾经在2016-5-10访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/272013/" target="_blank">272013</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/html/23/34923.html" title="xuxiubo曾经在2016-4-21访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(16).php" alt="xuxiubo曾经在2016-4-21访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/html/23/34923.html" target="_blank">xuxiubo</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/508116/" title="508116曾经在2016-4-05访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(17).php" alt="508116曾经在2016-4-05访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/508116/" target="_blank">508116</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/159228/" title="159228曾经在2016-3-25访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(18).php" alt="159228曾经在2016-3-25访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/159228/" target="_blank">159228</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/5146/" title="5146曾经在2016-2-19访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(19).php" alt="5146曾经在2016-2-19访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/5146/" target="_blank">5146</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/1400277/" title="1400277曾经在2016-2-14访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(20).php" alt="1400277曾经在2016-2-14访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/1400277/" target="_blank">1400277</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/882973/" title="882973曾经在2016-2-04访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(21).php" alt="882973曾经在2016-2-04访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/882973/" target="_blank">882973</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/1277740/" title="1277740曾经在2016-2-02访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(22).php" alt="1277740曾经在2016-2-02访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/1277740/" target="_blank">1277740</a></p></li>
+<li class="xspace-avatarlist xspace-imgstyle"><a href="http://www.eetop.cn/blog/547295/" title="547295曾经在2016-1-20访问过该主题" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(23).php" alt="547295曾经在2016-1-20访问过该主题" data-bd-imgshare-binded="1"></a><p><a href="http://www.eetop.cn/blog/547295/" target="_blank">547295</a></p></li>
+</ul>
+</div>
+
+<div id="xspace-relatives" class="xspace-msgmodule">
+<h5>相关阅读:</h5>
+<ul class="xspace-list">
+<li><a href="http://www.eetop.cn/blog/html/87/n-28287.html" target="_blank">Zain KSA选择诺西为利雅得部署4G网络</a> <span class="xspace-smalltxt">(<a href="http://www.eetop.cn/blog/html/95/569995.html" target="_blank">Bryan.lelei</a>, 2012-6-11)</span></li>
+<li><a href="http://www.eetop.cn/blog/html/79/n-28379.html" target="_blank">中国MEMS需变“墨点”为“梅花</a> <span class="xspace-smalltxt">(<a href="http://www.eetop.cn/blog/html/95/569995.html" target="_blank">Bryan.lelei</a>, 2012-6-14)</span></li>
+<li><a href="http://www.eetop.cn/blog/html/02/n-28502.html" target="_blank">艾法斯为S系列产品线增加IEEE 802.11ac功能</a> <span class="xspace-smalltxt">(<a href="http://www.eetop.cn/blog/html/95/569995.html" target="_blank">Bryan.lelei</a>, 2012-6-24)</span></li>
+<li><a href="http://www.eetop.cn/blog/html/89/n-28689.html" target="_blank">消息称我国将为TD-SCDMA开放单独行业频点</a> <span class="xspace-smalltxt">(<a href="http://www.eetop.cn/blog/html/95/569995.html" target="_blank">Bryan.lelei</a>, 2012-7-02)</span></li>
+</ul>
+</div>
+<p class="xspace-itemlinks">
+<a href="javascript:;" onclick="showajaxdiv(&#39;http://www.eetop.cn/blog/blogpost.php?action=import&amp;itemid=29149&#39;,400);">导入论坛</a>
+
+<a href="javascript:;" onclick="joinfavorite(29149);">收藏</a>
+<a href="javascript:;" onclick="showajaxdiv(&#39;http://www.eetop.cn/blog/batch.common.php?action=emailfriend&amp;itemid=29149&#39;, 400);">分享给好友</a>
+<a href="http://www.eetop.cn/blog/batch.manage.php?itemid=29149" target="_blank">管理</a>
+<a href="javascript:;" onclick="report(29149);">举报</a>
+</p>
+
+<p class="xspace-itemtag">TAG:
+<a href="http://www.eetop.cn/blog/action-tag-tagname-%CE%AA.html" target="_blank">为</a>
+</p>
+
+<div id="xspace-itemreply">
+
+		<dl id="xspace-comment13079">
+		<dt>
+		<a href="http://www.eetop.cn/blog/1151454/" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(24).php" class="xspace-signavatar xspace-imgstyle" alt="" data-bd-imgshare-binded="1"></a>
+
+		<a href="javascript:;" onclick="getQuote(13079)" class="xspace-quote">引用</a>
+		<a href="javascript:;" onclick="javascript:deletecomment(13079);" class="xspace-del">删除</a>
+
+		<a href="http://www.eetop.cn/blog/1151454/" target="_blank">ZIDANESAHA005</a> <span class="xspace-smalltxt"> &nbsp; / &nbsp; 2013-07-15 17:05:45</span>
+		</dt>
+		<dd>
+		正在学习启动代码，很有用,好像还没写完，期待中<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/lol.gif" align="absmiddle" border="0" data-bd-imgshare-binded="1">
+		</dd>
+		</dl>
+		
+		<dl id="xspace-comment13078">
+		<dt>
+		<a href="http://www.eetop.cn/blog/1151454/" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(24).php" class="xspace-signavatar xspace-imgstyle" alt="" data-bd-imgshare-binded="1"></a>
+
+		<a href="javascript:;" onclick="getQuote(13078)" class="xspace-quote">引用</a>
+		<a href="javascript:;" onclick="javascript:deletecomment(13078);" class="xspace-del">删除</a>
+
+		<a href="http://www.eetop.cn/blog/1151454/" target="_blank">ZIDANESAHA005</a> <span class="xspace-smalltxt"> &nbsp; / &nbsp; 2013-07-15 17:02:01</span>
+		</dt>
+		<dd>
+		评 <span style="font-size:18px;font-weight:bold;">5</span> 分<br>
+		</dd>
+		</dl>
+		
+		<dl id="xspace-comment12127">
+		<dt>
+		<a href="http://www.eetop.cn/blog/905938/" target="_blank"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(25).php" class="xspace-signavatar xspace-imgstyle" alt="" data-bd-imgshare-binded="1"></a>
+
+		<a href="javascript:;" onclick="getQuote(12127)" class="xspace-quote">引用</a>
+		<a href="javascript:;" onclick="javascript:deletecomment(12127);" class="xspace-del">删除</a>
+
+		<a href="http://www.eetop.cn/blog/905938/" target="_blank">I_SEE_YOU2</a> <span class="xspace-smalltxt"> &nbsp; / &nbsp; 2013-02-06 15:54:43</span>
+		</dt>
+		<dd>
+		评 <span style="font-size:18px;font-weight:bold;">1</span> 分<br>
+		</dd>
+		</dl>
+		<div id="xspace-multipage-div" class="xspace-multipage"><a href="javascript:;" onclick="javascript:showcomment(1);">查看全部评论</a></div>
+</div>
+
+<div id="xspace-itemform">
+<form id="xspace-commentform" action="http://www.eetop.cn/blog/batch.comment.php" method="post" target="xspace-phpframe">
+<fieldset id="xspace-rates">
+<div id="xspace-rates-bg">
+<div id="xspace-rates-star" class="xspace-rates0">&nbsp;</div>
+<div id="xspace-rates-a">
+<a href="javascript:;" onmouseover="rateHover(-5);" onmouseout="rateOut();" onclick="setRate(&#39;-5&#39;, &#39;29149&#39;);">-5</a>
+<a href="javascript:;" onmouseover="rateHover(-3);" onmouseout="rateOut();" onclick="setRate(&#39;-3&#39;, &#39;29149&#39;);">-3</a>
+<a href="javascript:;" onmouseover="rateHover(-1);" onmouseout="rateOut();" onclick="setRate(&#39;-1&#39;, &#39;29149&#39;);">-1</a>
+<a href="javascript:;" onmouseover="rateHover(0);" onmouseout="rateOut();" onclick="setRate(&#39;0&#39;, &#39;29149&#39;);">-</a>
+<a href="javascript:;" onmouseover="rateHover(1);" onmouseout="rateOut();" onclick="setRate(&#39;1&#39;, &#39;29149&#39;);">+1</a>
+<a href="javascript:;" onmouseover="rateHover(3);" onmouseout="rateOut();" onclick="setRate(&#39;3&#39;, &#39;29149&#39;);">+3</a>
+<a href="javascript:;" onmouseover="rateHover(5);" onmouseout="rateOut();" onclick="setRate(&#39;5&#39;, &#39;29149&#39;);">+5</a>
+</div>
+<input type="hidden" id="xspace-rates-value" name="rates" value="0">
+</div>
+<p>评分：<span id="xspace-rates-tip">0</span></p>
+</fieldset>
+<fieldset>
+<legend>我来说两句</legend>
+<p>
+<span onclick="moresmilies();" class="xspace-moresmilies">显示全部</span>
+</p><div id="xspace-smilies">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/loveliness.gif" border="0" alt=":loveliness:" id="smilie_0" onclick="insertSmilies(0)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/handshake.gif" border="0" alt=":handshake" id="smilie_1" onclick="insertSmilies(1)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/victory.gif" border="0" alt=":victory:" id="smilie_2" onclick="insertSmilies(2)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/funk.gif" border="0" alt=":funk:" id="smilie_3" onclick="insertSmilies(3)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/time.gif" border="0" alt=":time:" id="smilie_4" onclick="insertSmilies(4)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/kiss.gif" border="0" alt=":kiss:" id="smilie_5" onclick="insertSmilies(5)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/call.gif" border="0" alt=":call:" id="smilie_6" onclick="insertSmilies(6)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/hug.gif" border="0" alt=":hug:" id="smilie_7" onclick="insertSmilies(7)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/lol.gif" border="0" alt=":lol" id="smilie_8" onclick="insertSmilies(8)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/cry.gif" border="0" alt=":&#39;(" id="smilie_9" onclick="insertSmilies(9)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/mad.gif" border="0" alt=":Q" id="smilie_10" onclick="insertSmilies(10)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/sweat.gif" border="0" alt=":L" id="smilie_11" onclick="insertSmilies(11)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/titter.gif" border="0" alt=";P" id="smilie_12" onclick="insertSmilies(12)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/shy.gif" border="0" alt=":$" id="smilie_13" onclick="insertSmilies(13)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/tongue.gif" border="0" alt=":P" id="smilie_14" onclick="insertSmilies(14)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/shocked.gif" border="0" alt=":o" id="smilie_15" onclick="insertSmilies(15)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/huffy.gif" border="0" alt=":@" id="smilie_16" onclick="insertSmilies(16)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/biggrin.gif" border="0" alt=":D" id="smilie_17" onclick="insertSmilies(17)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/sad.gif" border="0" alt=":(" id="smilie_18" onclick="insertSmilies(18)" data-bd-imgshare-binded="1">
+<img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/smile.gif" border="0" alt=":)" id="smilie_19" onclick="insertSmilies(19)" data-bd-imgshare-binded="1">
+</div>
+<p></p>
+<p>
+<label for="xspace-commentmsg">内容</label>
+<textarea id="xspace-commentmsg" name="message"></textarea>
+</p>
+<p>
+<label for="xspace-nickname">昵称</label>
+<input type="text" size="20" id="xspace-nickname" name="nickname" value="">
+</p>
+<p>
+<label>加入事件</label>
+<input type="checkbox" name="addfeed" checked="checked">
+</p>
+<p>
+<input type="hidden" name="itemid" value="29149">
+<button value="true" type="submit" name="submitcomment" id="xspace-btncomment">提交评论</button>
+</p>
+</fieldset>
+</form>
+</div>
+
+<script language="javascript" type="text/javascript">
+<!--
+function showcomment(page) {
+var x = new Ajax('statusid', 'XML');
+x.get('http://www.eetop.cn/blog/batch.comment.php?action=view&itemid=29149&page='+page, function(s) {
+getbyid("xspace-itemreply").innerHTML = s.lastChild.firstChild.nodeValue;
+});
+}
+function deletecomment(cid) {
+var x = new Ajax('statusid', 'XML');
+x.get('http://www.eetop.cn/blog/batch.comment.php?action=delete&cid='+cid, function(s) {
+alert(s.lastChild.firstChild.nodeValue);
+});
+}
+
+function moresmilies() {
+var smilies = document.getElementById('xspace-smilies');
+if (smilies.style.height=='auto') {
+smilies.style.height = '';
+} else {
+smilies.style.height = 'auto';
+}
+}
+addImgLink("xspace-showmessage");
+addMediaAction('xspace-showmessage');
+//-->
+</script>
+<iframe id="xspace-phpframe" name="xspace-phpframe" width="0" height="0" marginwidth="0" frameborder="0" src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/saved_resource.html"></iframe></div>
+					</div>
+
+				<div id="sideleft" class="sidearea">
+			<div id="avatar" class="xspace-sideblock"><div id="xspace-avatar"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/avatar(26).php" alt="alphavor_jay" class="xspace-imgstyle" data-bd-imgshare-binded="1"><p><a href="http://www.eetop.cn/blog/840234/action-viewpro-showpro-1.html">alphavor_jay</a></p><p class="xspace-selfintro"></p></div></div><div id="action" class="xspace-sideblock">
+			<h3 class="xspace-blocktitle">用户菜单</h3>
+			<ul id="xspace-action">
+			<li><a class="xspace-message" href="http://www.eetop.cn/blog/840234/action-viewpro.html">给我留言</a></li>
+			<li><a class="xspace-addfriend" href="javascript:;" onclick="javascript:joinfriend(&#39;840234&#39;);">加入好友</a></li>
+			<li><a class="xspace-sendpm" href="http://bbs.eetop.cn/pm.php?action=send&amp;uid=840234" target="_blank">发短消息</a></li>
+			<li><a class="xspace-profile" href="http://www.eetop.cn/blog/840234/action-viewpro-showpro-1.html">我的介绍</a></li>
+			<li><a class="xspace-profile" href="http://bbs.eetop.cn/viewpro.php?uid=840234">论坛资料</a></li>
+			<li><a class="xspace-ctrlpannel" href="http://www.eetop.cn/blog/batch.manage.php?uid=840234">空间管理</a></li>
+			</ul>
+			</div><div id="itemtype" class="xspace-sideblock">
+				<h3 class="xspace-blocktitle">我的栏目</h3>
+				<ul class="xspace-list"><li><a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1457.html" target="_blank">Design Compiler</a></li><li><a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1467.html" target="_blank">Verilog_A</a></li><li><a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1474.html" target="_blank">IC Compiler</a></li><li><a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1475.html" target="_blank">Calibre</a></li><li><a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1476.html" target="_blank">仿真</a></li><li><a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1568.html" target="_blank">功耗分析</a></li><li><a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1640.html" target="_blank">基础知识</a></li><li><a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1641.html" target="_blank">Verilog Coding</a></li><li><a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1663.html" target="_blank">TetraMax</a></li><li><a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1664.html" target="_blank">DFT Compiler</a></li><li><a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1665.html" target="_blank">Low Power Design</a></li><li><a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1666.html" target="_blank">BIST</a></li><li><a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1673.html" target="_blank">ARM(Cortex-M3)</a></li><li><a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1674.html" target="_blank">Altium Designer</a></li><li><a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1711.html" target="_blank">上位机软件</a></li><li><a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1712.html" target="_blank">STC MCU</a></li><li><a href="http://www.eetop.cn/blog/840234/spacelist-blog-itemtypeid-1714.html" target="_blank">ARM(ARM11)</a></li></ul></div><div id="search" class="xspace-sideblock">
+			<h3 class="xspace-blocktitle">标题搜索</h3>
+			<form id="xspace-search" action="http://www.eetop.cn/blog/index.php?uid/840234/action/spacelist/php/1" method="post">
+			<input type="text" id="xspace-searchkey" name="searchkey" value="">
+			<input type="hidden" name="searchsubmit" value="yes">
+			<input type="submit" name="xspace-dosearch" id="xspace-dosearch" value="搜索">
+			</form>
+			</div><div id="calendar" class="xspace-sideblock">
+				<h3 class="xspace-blocktitle">日历</h3>
+<table id="xspace-calendar" cellspacing="2" cellpadding="2" border="0" width="100%" summary="xspace-Calendar">
+<tbody><tr>
+	<td colspan="7" align="center">
+		<table cellspacing="3" cellpadding="3" class="xspace-datenav" summary="xspace-Date nav">
+			<tbody><tr>
+				<td align="center"><a href="http://www.eetop.cn/blog/action-spacelist-uid-840234-type-blog-itemtypeid-1673-starttime-1525104000-endtime-1527782400.html">&#171;</a></td>
+				<td align="center" nowrap=""><a href="http://www.eetop.cn/blog/action-spacelist-uid-840234-type-blog-itemtypeid-1673-starttime-1527782400-endtime-1530374400.html">2018-06-18</a></td>
+				<td align="center">&nbsp;</td>
+			</tr>
+		</tbody></table>
+	</td>
+</tr>
+<tr align="center" class="xspace-week">
+	<td>日</td>
+	<td>一</td>
+	<td>二</td>
+	<td>三</td>
+	<td>四</td>
+	<td>五</td>
+	<td>六</td>
+</tr>
+<tr align="center"><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td><td>1</td><td>2</td></tr><tr align="center"><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td></tr><tr align="center"><td>10</td><td>11</td><td>12</td><td>13</td><td>14</td><td>15</td><td>16</td></tr><tr align="center"><td>17</td><td>18</td><td>19</td><td>20</td><td>21</td><td>22</td><td>23</td></tr><tr align="center"><td>24</td><td>25</td><td>26</td><td>27</td><td>28</td><td>29</td><td>30</td></tr>
+</tbody></table>
+</div><div id="archive" class="xspace-sideblock">
+			<h3 class="xspace-blocktitle">我的存档</h3>
+			<ul class="xspace-list"><li><a href="http://www.eetop.cn/blog/840234/action-spacelist-starttime-1346428800-endtime-1349020800.html">2012年09月</a></li><li><a href="http://www.eetop.cn/blog/840234/action-spacelist-starttime-1343750400-endtime-1346428800.html">2012年08月</a></li><li><a href="http://www.eetop.cn/blog/840234/action-spacelist-starttime-1341072000-endtime-1343750400.html">2012年07月</a></li><li><a href="http://www.eetop.cn/blog/840234/action-spacelist-starttime-1338480000-endtime-1341072000.html">2012年06月</a></li><li><a href="http://www.eetop.cn/blog/840234/action-spacelist-starttime-1335801600-endtime-1338480000.html">2012年05月</a></li><li><a href="http://www.eetop.cn/blog/840234/action-spacelist-starttime-1333209600-endtime-1335801600.html">2012年04月</a></li><li><a href="http://www.eetop.cn/blog/840234/action-spacelist-starttime-1330531200-endtime-1333209600.html">2012年03月</a></li><li><a href="http://www.eetop.cn/blog/840234/action-spacelist-starttime-1328025600-endtime-1330531200.html">2012年02月</a></li><li><a href="http://www.eetop.cn/blog/840234/action-spacelist-starttime-1325347200-endtime-1328025600.html">2012年01月</a></li><li><a href="http://www.eetop.cn/blog/840234/action-spacelist-starttime-1322668800-endtime-1325347200.html">2011年12月</a></li><li><a href="http://www.eetop.cn/blog/840234/action-spacelist-starttime-1320076800-endtime-1322668800.html">2011年11月</a></li><li><a href="http://www.eetop.cn/blog/840234/action-spacelist-starttime-1317398400-endtime-1320076800.html">2011年10月</a></li><li><a href="http://www.eetop.cn/blog/840234/action-spacelist-starttime-1314806400-endtime-1317398400.html">2011年09月</a></li></ul></div><div id="infomation" class="xspace-sideblock">
+			<h3 class="xspace-blocktitle">数据统计</h3>
+			<ul class="xspace-list">
+			<li>访问量: 177490</li><li>日志数: 25</li><li>建立时间: 2011-09-13</li>
+			<li>更新时间: 2012-09-09</li>
+			</ul></div><div id="rss" class="xspace-sideblock">
+			<h3 class="xspace-blocktitle">RSS订阅</h3>
+			<ul class="xspace-list">
+			<li class="xspace-logo"><a href="http://www.eetop.cn/blog/840234/action-rss-type-blog.html"><img src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/rss.gif" alt="RSS订阅" border="0" data-bd-imgshare-binded="1"></a></li>
+			</ul>
+			</div>		</div>
+		
+		
+	</div>
+</div>
+
+<div id="xspace-footer">
+	<p id="xspace-footer-ad">
+			</p>
+	<p id="xspace-footer_menu">
+		<a href="http://www.eetop.cn/blog/batch.login.php?action=logout">清空Cookie</a> -
+		<a href="mailto:admin@yourdomain.com">联系我们</a> -
+		<a href="http://www.eetop.cn/blog/" target="_blank">ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台</a> -
+		<a href="http://bbs.eetop.cn/" target="_blank">交流论坛</a> -
+		<a href="http://www.eetop.cn/blog/action/spaces.html">空间列表</a> -
+		<a href="http://www.eetop.cn/blog/archiver/" target="_blank">站点存档</a> -
+		<a href="http://www.eetop.cn/blog/action/register.html" target="_blank">升级自己的空间</a>
+	</p>
+	<p id="xspace-copyright">
+		Powered by <a href="http://www.supesite.com/" target="_blank"><strong>X-Space</strong></a>
+		<em>4.0.1 UC</em>
+		&#169; 2001-2008 <a href="http://www.comsenz.com/" target="_blank">Comsenz Inc.</a>
+		<br>
+		<a href="http://www.miibeian.gov.cn/" target="_blank">京ICP备:10050787号 京公网安备：110105001212 <script type="text/javascript">var _bdhmProtocol = (("https:" == document.location.protocol) ? " https://" : " http://");document.write(unescape("%3Cscript src='" + _bdhmProtocol + "hm.baidu.com/h.js%3Ffdfa1a2ce5868f440110d5c8fe7cd441' type='text/javascript'%3E%3C/script%3E"));</script><script src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/h.js" type="text/javascript"></script></a><a href="http://tongji.baidu.com/hm-web/welcome/ico?s=fdfa1a2ce5868f440110d5c8fe7cd441" target="_blank"><img border="0" src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/21.gif" width="20" height="20" data-bd-imgshare-binded="1"></a>  <script type="text/javascript"> var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www."); document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E")); </script><script src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/ga.js" type="text/javascript"></script> <script type="text/javascript"> try { var pageTracker = _gat._getTracker("UA-3324947-4"); pageTracker._trackPageview(); } catch(err) {}</script> <script type="text/javascript">  var _gaq = _gaq || [];  _gaq.push(['_setAccount', 'UA-3324947-23']); _gaq.push(['_trackPageview']); (function() { var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true; ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js'; var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s); })(); </script> <script>window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"0","bdSize":"16"},"slide":{"type":"slide","bdImg":"6","bdPos":"right","bdTop":"238.5"},"image":{"viewList":["qzone","tsina","tqq","renren","weixin"],"viewText":"分享到：","viewSize":"16"},"selectShare":{"bdContainerClass":null,"bdSelectMiniList":["qzone","tsina","tqq","renren","weixin"]}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];</script> <br>	Last update: <a href="http://www.eetop.cn/blog/index.php?uid/840234/action/viewspace/itemid/29149/php/1" title="点击可以立即更新本页面">2018-6-18 15:26:38</a><br></p>
+</div>
+<div id="toolbarshowbtn"><a href="javascript:;" onmouseover="showtoolbar();">Open Toolbar</a></div>
+<div id="toolbarframe"><iframe frameborder="0" scrolling="no" src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/batch.toolbar.html" width="100%"></iframe></div>
+
+
+			<script language="javascript">
+			<!--
+			var Modified = new Date(document.lastModified);
+			var copyright = document.getElementById("xspace-copyright");
+			if(copyright) {
+				copyright.innerHTML += "Last update: <a href=\"http://www.eetop.cn/blog/index.php?uid/840234/action/viewspace/itemid/29149/php/1\" title=\"点击可以立即更新本页面\">"+(Modified.getYear()<200?(Modified.getYear()+1900):Modified.getYear())+"-"+(Modified.getMonth()+1)+"-"+Modified.getDate()+" "+Modified.getHours()+":"+Modified.getMinutes()+":"+Modified.getSeconds() + "</a><br>";
+			}
+			document.write('<script src="http://www.eetop.cn/blog/batch.html.php?code=http%253A%252F%252Fwww.eetop.cn%252Fblog%252Findex.php%253Fuid%252F840234%252Faction%252Fviewspace%252Fitemid%252F29149%2F1529306798%2F3600%2F840234%2F29149%2Fviewspace&amp;lastmodified=' + Modified.getTime() + '" type="text\/javascript" language="javascript"><\/script>');
+			//-->
+			</script><script src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/batch.html.php" type="text/javascript" language="javascript"></script><div class="sogoutip" style="z-index: 2147483645; visibility: hidden; display: none;"></div><div class="sogoubottom" id="sougou_bottom" style="display: none;"></div><div id="ext_stophi" style="z-index: 2147483647;"><div class="extnoticebg"></div><div class="extnotice"><h2>关闭提示 <a href="http://www.eetop.cn/blog/html/34/840234-29149.html#" title="关闭提示" id="closenotice" class="closenotice">关闭</a></h2><p id="sogouconfirmtxt"></p>  <a id="sogouconfirm" href="http://www.eetop.cn/blog/html/34/840234-29149.html#" class="extconfirm">确 认</a> <a id="sogoucancel" href="http://www.eetop.cn/blog/html/34/840234-29149.html#" class="extconfirm">取 消</a></div></div><div id="ext_overlay" class="ext_overlayBG" style="display: none; z-index: 2147483646;"></div><iframe class="sogou_sugg_feedbackquan" frameborder="0" scrolling="no" src="./ARM启动过程(Cortex-M3 NXP LPC1768为例) - 猪头的奋斗 - ET创芯网(EETOP)-电子设计论坛、博客、超人气的电子工程师资料分享平台 - Powered by X-Space_files/yun6.html" style="border: none; display: none; height: 84px; width: 100%; z-index: 2147483645; background: transparent;"></iframe><iframe frameborder="0" id="bdSharePopup_selectshare1529368230640bg" class="bdselect_share_bg" style="display:none;"></iframe><div id="bdSharePopup_selectshare1529368230640box" style="display:none;" share-type="selectshare" class="bdselect_share_box" data-bd-bind="1529368230638"><div class="selectshare-mod-triangle"><div class="triangle-border"></div><div class="triangle-inset"></div></div><div class="bdselect_share_head"><span>分享到</span><a href="http://www.baidu.com/s?wd=&amp;tn=SE_hldp08010_vurs2xrp" class="bdselect_share_dialog_search" target="_blank"><i class="bdselect_share_dialog_search_i"></i><span class="bdselect_share_dialog_search_span">百度一下</span></a><a class="bdselect_share_dialog_close"></a></div><div class="bdselect_share_content"><ul class="bdselect_share_list bdshare-button-style0-16"><div class="bdselect_share_partners"></div><a href="http://www.eetop.cn/blog/html/34/840234-29149.html#" class="bds_more" data-cmd="more"></a></ul></div></div><div id="bdimgshare_1529368230650" class="sr-bdimgshare sr-bdimgshare-list sr-bdimgshare-16 sr-bdimgshare-black" style="height:36px;line-height:26px;font-size:12px;width:autopx;display:none;" data-bd-bind="1529368230648"><div class="bdimgshare-bg"></div><div class="bdimgshare-content bdsharebuttonbox bdshare-button-style0-16"><label class="bdimgshare-lbl">分享到：</label><a href="http://www.eetop.cn/blog/html/34/840234-29149.html#" onclick="return false;" class="bds_qzone" data-cmd="qzone" hidefocus=""></a><a href="http://www.eetop.cn/blog/html/34/840234-29149.html#" onclick="return false;" class="bds_tsina" data-cmd="tsina" hidefocus=""></a><a href="http://www.eetop.cn/blog/html/34/840234-29149.html#" onclick="return false;" class="bds_tqq" data-cmd="tqq" hidefocus=""></a><a href="http://www.eetop.cn/blog/html/34/840234-29149.html#" onclick="return false;" class="bds_renren" data-cmd="renren" hidefocus=""></a><a href="http://www.eetop.cn/blog/html/34/840234-29149.html#" onclick="return false;" class="bds_weixin" data-cmd="weixin" hidefocus=""></a><a href="http://www.eetop.cn/blog/html/34/840234-29149.html#" onclick="return false;" class="bds_more" data-cmd="more" hidefocus=""></a></div></div><div class="bdshare-slide-button-box bdshare-slide-style-r6" style="top: 238px; width: 0px; z-index: 99999; right: 0px;" data-bd-bind="1529368230659"><a href="http://www.eetop.cn/blog/html/34/840234-29149.html#" onclick="return false;" class="bdshare-slide-button" style="left: -24px;"></a><div class="bdshare-slide-list-box" style="width: 0px; display: none;"><div class="bdshare-slide-top">分享到</div><div class="bdshare-slide-list"><ul class="bdshare-slide-list-ul" style="width: 226px;"></ul></div><div class="bdshare-slide-bottom" style="width: 226px;"><a href="http://www.eetop.cn/blog/html/34/840234-29149.html#" onclick="return false;" class="slide-more" data-cmd="more">更多...</a></div></div></div></body></html>
